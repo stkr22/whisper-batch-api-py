@@ -1,0 +1,30 @@
+{
+	"name": "whisper-batch-api-py-dev-environment",
+	"image": "mcr.microsoft.com/devcontainers/python:3.11",
+	"mounts": [
+		{
+			"source": "vscode-whisper-batch-api-py",
+			"target": "/vscode/.vscode-server/extensions",
+			"type": "volume"
+		}
+	],
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-python.python",
+				"samuelcolvin.jinjahtml",
+				"streetsidesoftware.code-spell-checker",
+				"christian-kohler.path-intellisense",
+				"charliermarsh.ruff",
+				"ms-python.mypy-type-checker",
+				"tamasfe.even-better-toml"
+			]
+		}
+	},
+	"containerEnv": {
+		"POETRY_VIRTUALENVS_IN_PROJECT": "true"
+	},
+	"postCreateCommand": "pip install --user poetry pre-commit && poetry install",
+	"postStartCommand": "git config --global --add safe.directory ${containerWorkspaceFolder}"
+
+}
