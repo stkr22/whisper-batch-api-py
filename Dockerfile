@@ -11,6 +11,12 @@ ENV POETRY_VIRTUALENVS_IN_PROJECT true
 RUN pip install --upgrade pip \
     pip install poetry && poetry install
 
+# Create a non-root user and switch to it
+RUN groupadd -r apiuser && useradd -r -g apiuser apiuser
+
+# Switch to the non-root user
+USER apiuser
+
 EXPOSE 80
 
 HEALTHCHECK --interval=20s --timeout=20s --start-period=5s --retries=3 CMD ["curl --fail -so /dev/null http://localhost:80/docs"]
