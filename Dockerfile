@@ -12,7 +12,7 @@ RUN pip install --upgrade pip \
     pip install poetry && poetry install
 
 # Create a non-root user and switch to it
-RUN groupadd -r apiuser && useradd -r -g apiuser apiuser
+RUN groupadd -r apiuser && useradd -r -m -g apiuser apiuser
 
 # Switch to the non-root user
 USER apiuser
