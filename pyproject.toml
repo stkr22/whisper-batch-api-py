@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "whisper-batch-api"
-version = "1.2.0"
+version = "2.0.0"
 description = "Simple Whisper API for batch processing of audio data."
 authors = ["stkr22 <stkr22@github.com>"]
 readme = "README.md"
