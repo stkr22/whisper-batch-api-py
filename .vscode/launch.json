@@ -13,6 +13,7 @@
                 "whisper_batch_api.main:app"
             ],
             "jinja": true,
+            "env": {"ALLOWED_USER_TOKEN": "DEBUG"}
         }
     ]
 }
