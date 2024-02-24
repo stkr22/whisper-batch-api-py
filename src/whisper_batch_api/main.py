@@ -21,7 +21,7 @@ class TranscriptionResult(BaseModel):
 
 
 WHISPER_MODEL = os.getenv("WHISPER_MODEL", "tiny.en")
-ALLOWED_USER_AGENT = os.getenv("ALLOWED_USER_AGENT", None)
+ALLOWED_USER_TOKEN = os.environ["ALLOWED_USER_TOKEN"]
 TRANSCRIBER_OBJ = WhisperModel(
     WHISPER_MODEL,
     device="cpu",
@@ -29,11 +29,16 @@ TRANSCRIBER_OBJ = WhisperModel(
 )
 
 
-@app.post("/transcribe/")
+@app.get("/health")
+async def health() -> dict:
+    return {"status": "healthy"}
+
+
+@app.post("/transcribe")
 async def transcribe(
-    audio_data: AudioData, user_agent: Annotated[str | None, Header()] = None
+    audio_data: AudioData, user_token: Annotated[str | None, Header()] = None
 ) -> TranscriptionResult:
-    if user_agent != ALLOWED_USER_AGENT:
+    if user_token != ALLOWED_USER_TOKEN:
         raise HTTPException(status_code=403)
     try:
         # Convert base64 string back to numpy array

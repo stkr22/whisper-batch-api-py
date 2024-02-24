@@ -19,6 +19,6 @@ USER apiuser
 
 EXPOSE 80
 
-HEALTHCHECK --interval=20s --timeout=20s --start-period=5s --retries=3 CMD ["curl --fail -so /dev/null http://localhost:80/docs"]
+HEALTHCHECK --interval=20s --timeout=20s --start-period=5s --retries=3 CMD ["curl --fail -so /dev/null http://localhost:80/health"]
 
 ENTRYPOINT [ ".venv/bin/uvicorn", "whisper_batch_api.main:app", "--host",  "0.0.0.0", "--port", "80" ]
