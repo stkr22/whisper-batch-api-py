@@ -20,7 +20,7 @@ class TranscriptionResult(BaseModel):
     text: str
 
 
-WHISPER_MODEL = os.getenv("WHISPER_MODEL", "tiny.en")
+WHISPER_MODEL = os.getenv("WHISPER_MODEL", "distil-medium.en")
 ALLOWED_USER_TOKEN = os.environ["ALLOWED_USER_TOKEN"]
 TRANSCRIBER_OBJ = WhisperModel(
     WHISPER_MODEL,
@@ -45,7 +45,12 @@ async def transcribe(
         audio_bytes = base64.b64decode(audio_data.audio_base64)
         audio_np = np.frombuffer(audio_bytes, dtype=audio_data.dtype)
 
-        segments, info = TRANSCRIBER_OBJ.transcribe(audio_np)
+        segments, info = TRANSCRIBER_OBJ.transcribe(
+            audio_np,
+            language="en",
+            max_new_tokens=128,
+            condition_on_previous_text=False,
+        )
         final_text = ""
         for segment in segments:
             final_text += segment.text
