@@ -4,13 +4,6 @@
 	"runArgs": [
 		"--userns=keep-id"
 	],
-	"mounts": [
-		{
-			"source": "vscode-whisper-batch-api-py",
-			"target": "/vscode/.vscode-server/extensions",
-			"type": "volume"
-		}
-	],
 	"customizations": {
 		"vscode": {
 			"extensions": [
