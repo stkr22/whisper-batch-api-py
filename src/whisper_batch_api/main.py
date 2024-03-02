@@ -20,6 +20,8 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
+ml_models: dict[str, faster_whisper.WhisperModel] = {}
+
 
 class AudioData(BaseModel):
     audio_base64: str
@@ -31,17 +33,11 @@ class TranscriptionResult(BaseModel):
     text: str
 
 
-WHISPER_MODEL = os.getenv("WHISPER_MODEL", "distil-medium.en")
-ALLOWED_USER_TOKEN = os.environ["ALLOWED_USER_TOKEN"]
-
-ml_models: dict[str, faster_whisper.WhisperModel] = {}
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Load the ML model
     ml_models["transcriber_engine"] = faster_whisper.WhisperModel(
-        WHISPER_MODEL,
+        os.getenv("WHISPER_MODEL", "distil-medium.en"),
         device="cpu",
         compute_type="int8",
     )
@@ -63,23 +59,19 @@ async def transcribe(
     audio_data: AudioData, user_token: Annotated[str | None, Header()] = None
 ) -> TranscriptionResult:
     transcriber_engine = ml_models["transcriber_engine"]
-    if user_token != ALLOWED_USER_TOKEN:
+    if user_token != os.environ["ALLOWED_USER_TOKEN"]:
         raise HTTPException(status_code=403)
-    try:
-        # Convert base64 string back to numpy array
-        audio_bytes = base64.b64decode(audio_data.audio_base64)
-        audio_np = np.frombuffer(audio_bytes, dtype=audio_data.dtype)
+    audio_bytes = base64.b64decode(audio_data.audio_base64)
+    audio_np = np.frombuffer(audio_bytes, dtype=audio_data.dtype)
 
-        segments, info = transcriber_engine.transcribe(
-            audio_np,
-            language="en",
-            max_new_tokens=128,
-            condition_on_previous_text=False,
-        )
-        final_text = ""
-        for segment in segments:
-            final_text += segment.text
+    segments, info = transcriber_engine.transcribe(
+        audio_np,
+        language="en",
+        max_new_tokens=128,
+        condition_on_previous_text=False,
+    )
+    final_text = ""
+    for segment in segments:
+        final_text += segment.text
 
-        return TranscriptionResult(message="Transcription successful", text=final_text)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    return TranscriptionResult(message="Transcription successful", text=final_text)
