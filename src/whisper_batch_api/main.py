@@ -1,13 +1,24 @@
 import base64
+import logging
 import os
+import sys
+from contextlib import asynccontextmanager
 from typing import Annotated
 
+import faster_whisper
 import numpy as np
 from fastapi import FastAPI, Header, HTTPException
-from faster_whisper import WhisperModel
 from pydantic import BaseModel
 
-app = FastAPI()
+# Configure logging
+log_level = os.getenv("LOG_LEVEL", "INFO").upper()
+logging.basicConfig(
+    level=log_level,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    stream=sys.stdout,
+)
+
+logger = logging.getLogger(__name__)
 
 
 class AudioData(BaseModel):
@@ -22,11 +33,24 @@ class TranscriptionResult(BaseModel):
 
 WHISPER_MODEL = os.getenv("WHISPER_MODEL", "distil-medium.en")
 ALLOWED_USER_TOKEN = os.environ["ALLOWED_USER_TOKEN"]
-TRANSCRIBER_OBJ = WhisperModel(
-    WHISPER_MODEL,
-    device="cpu",
-    compute_type="int8",
-)
+
+ml_models: dict[str, faster_whisper.WhisperModel] = {}
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Load the ML model
+    ml_models["transcriber_engine"] = faster_whisper.WhisperModel(
+        WHISPER_MODEL,
+        device="cpu",
+        compute_type="int8",
+    )
+    yield
+    # Clean up the ML models and release the resources
+    ml_models.clear()
+
+
+app = FastAPI(lifespan=lifespan)
 
 
 @app.get("/health")
@@ -38,6 +62,7 @@ async def health() -> dict:
 async def transcribe(
     audio_data: AudioData, user_token: Annotated[str | None, Header()] = None
 ) -> TranscriptionResult:
+    transcriber_engine = ml_models["transcriber_engine"]
     if user_token != ALLOWED_USER_TOKEN:
         raise HTTPException(status_code=403)
     try:
@@ -45,7 +70,7 @@ async def transcribe(
         audio_bytes = base64.b64decode(audio_data.audio_base64)
         audio_np = np.frombuffer(audio_bytes, dtype=audio_data.dtype)
 
-        segments, info = TRANSCRIBER_OBJ.transcribe(
+        segments, info = transcriber_engine.transcribe(
             audio_np,
             language="en",
             max_new_tokens=128,
