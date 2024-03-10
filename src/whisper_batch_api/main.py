@@ -63,13 +63,22 @@ async def transcribe(
         raise HTTPException(status_code=403)
     audio_bytes = base64.b64decode(audio_data.audio_base64)
     audio_np = np.frombuffer(audio_bytes, dtype=audio_data.dtype)
-
-    segments, info = transcriber_engine.transcribe(
-        audio_np,
-        language="en",
-        max_new_tokens=128,
-        condition_on_previous_text=False,
-    )
+    if "distil" in os.getenv("WHISPER_MODEL", "distil-medium.en"):
+        optimal_chunks = (
+            15 * 16000
+        )  # filling to recommended size of 15s https://github.com/huggingface/distil-whisper/blob/a07edc4f3840bca33c5dc495303196bf6d0b2c40/README.md?plain=1#L131
+        desired_length = np.ceil(audio_np.size / optimal_chunks) * optimal_chunks
+        pad_size = int(desired_length) - audio_np.size
+        padded_array = np.pad(audio_np, (0, pad_size), "constant", constant_values=(0))
+        audio_np = padded_array
+        segments, info = transcriber_engine.transcribe(
+            audio_np,
+            language="en",
+            max_new_tokens=128,
+            condition_on_previous_text=False,
+        )
+    else:
+        segments, info = transcriber_engine.transcribe(audio_np)
     final_text = ""
     for segment in segments:
         final_text += segment.text
