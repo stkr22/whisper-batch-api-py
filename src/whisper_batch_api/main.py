@@ -1,4 +1,3 @@
-import base64
 import logging
 import os
 import sys
@@ -7,7 +6,7 @@ from typing import Annotated
 
 import faster_whisper
 import numpy as np
-from fastapi import FastAPI, Header, HTTPException
+from fastapi import FastAPI, Header, HTTPException, UploadFile
 from pydantic import BaseModel
 
 # Configure logging
@@ -21,11 +20,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 ml_models: dict[str, faster_whisper.WhisperModel] = {}
-
-
-class AudioData(BaseModel):
-    audio_base64: str
-    dtype: str = "float32"
 
 
 class TranscriptionResult(BaseModel):
@@ -56,13 +50,14 @@ async def health() -> dict:
 
 @app.post("/transcribe")
 async def transcribe(
-    audio_data: AudioData, user_token: Annotated[str | None, Header()] = None
+    file: UploadFile,
+    user_token: Annotated[str | None, Header()] = None,
 ) -> TranscriptionResult:
     transcriber_engine = ml_models["transcriber_engine"]
     if user_token != os.environ["ALLOWED_USER_TOKEN"]:
         raise HTTPException(status_code=403)
-    audio_bytes = base64.b64decode(audio_data.audio_base64)
-    audio_np = np.frombuffer(audio_bytes, dtype=audio_data.dtype)
+    audio_bytes = await file.read()
+    audio_np = np.frombuffer(audio_bytes, dtype=np.float32)
     if "distil" in os.getenv("WHISPER_MODEL", "distil-medium.en"):
         optimal_chunks = (
             15 * 16000
