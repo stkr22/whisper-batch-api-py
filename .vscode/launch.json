@@ -10,10 +10,14 @@
             "request": "launch",
             "module": "uvicorn",
             "args": [
-                "whisper_batch_api.main:app"
+                "whisper_batch_api.main:app",
+                "--port", "8080"
             ],
             "jinja": true,
-            "env": {"ALLOWED_USER_TOKEN": "DEBUG"}
+            "env": {
+                "ALLOWED_USER_TOKEN": "DEBUG",
+                "LOG_LEVEL": "DEBUG"
+            }
         }
     ]
 }
