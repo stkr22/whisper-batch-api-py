@@ -12,6 +12,7 @@ python = "^3.11"
 fastapi = "^0.109.2"
 uvicorn = "^0.27.1"
 faster-whisper = "1.0.0"
+python-multipart = "^0.0.9"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.1.11"
@@ -28,5 +29,5 @@ line-length = 88
 indent-width = 4
 
 [tool.ruff.lint]
-select = ["E4", "E7", "E9", "F", "UP"]
+select = ["E4", "E7", "E9", "F", "I", "UP"]
 ignore = ["E203"]
