@@ -32,8 +32,8 @@ async def lifespan(app: FastAPI):
     # Load the ML model
     ml_models["transcriber_engine"] = faster_whisper.WhisperModel(
         os.getenv("WHISPER_MODEL", "distil-medium.en"),
-        device="cpu",
-        compute_type="int8",
+        device="cuda",
+        compute_type="float16",
     )
     yield
     # Clean up the ML models and release the resources
@@ -78,4 +78,6 @@ async def transcribe(
     for segment in segments:
         final_text += segment.text
 
-    return TranscriptionResult(message="Transcription successful", text=final_text)
+    return TranscriptionResult(
+        message="Transcription successful", text=final_text.strip()
+    )
