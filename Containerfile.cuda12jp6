@@ -1,0 +1,35 @@
+# Start with NVIDIA CUDA base image for Jetson Orin Nano
+FROM nvidia/cuda:12.6.1-cudnn-devel-ubuntu22.04
+
+# Install dependencies for compiling CTranslate2 and Faster Whisper
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        python3-dev \
+        python3-pip \
+        git \
+        wget \
+        build-essential \
+        libnuma-dev \
+        && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN python3 -m pip --no-cache-dir install cmake==3.22.*
+
+# Clone and compile CTranslate2 with CUDA and CuDNN support
+RUN git clone https://github.com/OpenNMT/CTranslate2.git /ctranslate2 && \
+    cd /ctranslate2 && \
+    git checkout 383d063 && git submodule update --init --recursive && \
+    cmake -Bbuild_folder -DWITH_MKL=OFF -DOPENMP_RUNTIME=NONE -DWITH_CUDA=ON -DWITH_CUDNN=ON && \
+    cmake --build build_folder && \
+    cd build_folder && \
+    make install
+
+WORKDIR /ctranslate2/python
+
+# Install Python requirements for CTranslate2 and build the Python wheel
+RUN pip3 install -r install_requirements.txt && \
+    python3 setup.py bdist_wheel
+
+# Install Faster Whisper
+RUN pip3 install faster-whisper torch faster-whisper dist/*.whl
