@@ -1,33 +1,102 @@
-[tool.poetry]
-name = "whisper-batch-api"
+[build-system]
+requires = ["uv_build>=0.9.5,<0.10.0"]
+build-backend = "uv_build"
+
+[project]
+name = "app"
 version = "2.4.0"
 description = "Simple Whisper API for batch processing of audio data."
-authors = ["stkr22 <stkr22@github.com>"]
+authors = [{ name = "stkr22", email = "stkr22@github.com" }]
 readme = "README.md"
-license = "MIT"
-include = ["src"]
+license = "GPL-3.0-only"
+license-files = [
+    "LICENSE",
+]
 
-[tool.poetry.dependencies]
-python = "^3.11"
-fastapi = "^0.109.2"
-uvicorn = "^0.27.1"
-faster-whisper = "^1.1.1"
-python-multipart = "^0.0.9"
+keywords = []
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Programming Language :: Python",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Topic :: Home Automation",
+]
 
-[tool.poetry.group.dev.dependencies]
-ruff = "^0.1.11"
-mypy = "^1.8.0"
-pytest = "^7.4.4"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+    "fastapi[standard]~=0.119.1",
+    "python-multipart~=0.0.9",
+    "faster-whisper~=1.2.1",
+]
 
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+[project.urls]
+Homepage = "https://github.com/stkr22/whisper-batch-api-py"
+Repository = "https://github.com/stkr22/whisper-batch-api-py"
+Documentation = "https://github.com/stkr22/whisper-batch-api-py/tree/main/docs"
+Issues = "https://github.com/stkr22/whisper-batch-api-py/issues"
+Changelog = "https://github.com/stkr22/whisper-batch-api-py/blob/main/CHANGELOG.md"
+
+[dependency-groups]
+dev = [
+    "ruff~=0.14.2",
+    "mypy~=1.18.0",
+    "pytest~=8.4.1",
+    "pytest-cov~=6.2.1",
+    "coverage[toml]~=7.6.0",
+]
 
 [tool.ruff]
-target-version = "py311"
-line-length = 88
+line-length = 120
 indent-width = 4
 
 [tool.ruff.lint]
-select = ["E4", "E7", "E9", "F", "I", "UP"]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "I",   # isort
+    "UP",  # pyupgrade
+    "N",   # pep8-naming
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "RET", # flake8-return
+    "SIM", # flake8-simplify
+    "ARG", # flake8-unused-arguments
+    "PTH", # flake8-use-pathlib
+    "ERA", # eradicate
+    "PL",  # pylint
+    "RUF", # ruff-specific rules
+    "TCH", # flake8-type-checking
+]
 ignore = ["E203"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.mypy]
+warn_return_any = true
+warn_unused_configs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-ra -q"
+
+[tool.coverage.run]
+source = ["app"]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if __name__ == .__main__.:",
+]
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+tag_format = "v$version"
+version_scheme = "pep440"
+version_provider = "scm"
+update_changelog_on_bump = true
