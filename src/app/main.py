@@ -28,7 +28,7 @@ class TranscriptionResult(BaseModel):
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_app: FastAPI):
     # Load the ML model
     ml_models["transcriber_engine"] = faster_whisper.WhisperModel(
         os.getenv("WHISPER_MODEL", "distil-medium.en"),
@@ -69,7 +69,7 @@ async def transcribe(
         pad_size = int(desired_length) - audio_np.size
         padded_array = np.pad(audio_np, (0, pad_size), "constant", constant_values=(0))
         audio_np = padded_array
-        segments, info = batched_model.transcribe(
+        segments, _info = batched_model.transcribe(
             audio_np,
             language="en",
             temperature=0,
@@ -78,7 +78,7 @@ async def transcribe(
             condition_on_previous_text=False,
         )
     else:
-        segments, info = transcriber_engine.transcribe(
+        segments, _info = transcriber_engine.transcribe(
             audio_np,
             max_new_tokens=224,
             beam_size=5,
