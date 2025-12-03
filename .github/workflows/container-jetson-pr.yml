@@ -31,7 +31,7 @@ jobs:
       - name: Test Image
         run: |
           docker run --runtime nvidia --rm --gpus all whisper-api:jetson-pr-test \
-            python3 -c "import ctranslate2; print('CTranslate2 OK')"
+            python3 -c "import ctranslate2; print('CTranslate2 OK'); from faster_whisper import WhisperModel; print('faster-whisper OK')"
 
       - name: Cleanup
         if: always()
