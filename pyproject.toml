@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "app"
-version = "2.5.0"
+version = "2.5.1"
 description = "Simple Whisper API for batch processing of audio data."
 authors = [{ name = "stkr22", email = "stkr22@github.com" }]
 readme = "README.md"

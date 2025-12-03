@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.5.1](https://github.com/stkr22/whisper-batch-api-py/compare/v2.5.0...v2.5.1) (2025-12-03)
+
+
+### Bug Fixes
+
+* enhance non-root user setup and add cache directory for huggingface ([97249e8](https://github.com/stkr22/whisper-batch-api-py/commit/97249e8739f795eca24961dfd66671c2e80435f7))
+* enhance non-root user setup and add cache directory for huggingface ([4154084](https://github.com/stkr22/whisper-batch-api-py/commit/4154084ab684dfb9e68b6d67c0ff118aacc109c5))
+
 ## [2.5.0](https://github.com/stkr22/whisper-batch-api-py/compare/v2.4.0...v2.5.0) (2025-12-03)
 
 
