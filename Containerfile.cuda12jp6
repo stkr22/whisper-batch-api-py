@@ -1,7 +1,7 @@
-# Start with NVIDIA CUDA base image for Jetson Orin Nano
-FROM nvidia/cuda:12.6.1-cudnn-devel-ubuntu22.04
+# Stage 1: Builder - Build CTranslate2 from source
+FROM nvidia/cuda:12.6.1-cudnn-devel-ubuntu22.04 AS builder
 
-# Install dependencies for compiling CTranslate2 and Faster Whisper
+# Install build dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         python3-dev \
@@ -19,17 +19,92 @@ RUN python3 -m pip --no-cache-dir install cmake==3.22.*
 # Clone and compile CTranslate2 with CUDA and CuDNN support
 RUN git clone https://github.com/OpenNMT/CTranslate2.git /ctranslate2 && \
     cd /ctranslate2 && \
-    git checkout 383d063 && git submodule update --init --recursive && \
-    cmake -Bbuild_folder -DWITH_MKL=OFF -DOPENMP_RUNTIME=NONE -DWITH_CUDA=ON -DWITH_CUDNN=ON && \
+    git checkout 7f23e02 && \
+    git submodule update --init --recursive
+
+WORKDIR /ctranslate2
+
+# Build and install C++ library with Jetson Orin optimizations
+RUN cmake -Bbuild_folder \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DWITH_MKL=OFF \
+    -DOPENMP_RUNTIME=NONE \
+    -DWITH_CUDA=ON \
+    -DWITH_CUDNN=ON \
+    -DCUDA_ARCH_LIST="8.7" \
+    -DCUDA_NVCC_FLAGS="-Xfatbin=-compress-all" && \
     cmake --build build_folder && \
     cd build_folder && \
-    make install
+    make install && \
+    ldconfig
 
-WORKDIR /ctranslate2/python
+# Build Python wheel
+RUN pip3 install -r ./python/install_requirements.txt && \
+    pip3 wheel ./python/ -w /wheels --no-deps
 
-# Install Python requirements for CTranslate2 and build the Python wheel
-RUN pip3 install -r install_requirements.txt && \
-    python3 setup.py bdist_wheel
+# Stage 2: Runtime - Minimal image with only runtime dependencies
+FROM nvidia/cuda:12.6.1-cudnn-runtime-ubuntu22.04
 
-# Install Faster Whisper
-RUN pip3 install faster-whisper torch faster-whisper dist/*.whl
+# Install only runtime dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        python3 \
+        python3-pip \
+        libnuma1 \
+        && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy compiled libraries from builder
+COPY --from=builder /usr/local/lib/libctranslate2* /usr/local/lib/
+COPY --from=builder /usr/local/include/ctranslate2 /usr/local/include/ctranslate2
+COPY --from=builder /wheels /wheels
+
+# Set library path for runtime
+ENV LD_LIBRARY_PATH=/usr/local/lib:${LD_LIBRARY_PATH}
+
+# Update library cache
+RUN ldconfig
+
+# Install ctranslate2 wheel (before uv sync to avoid conflicts)
+RUN pip3 install --no-cache-dir /wheels/*.whl && \
+    rm -rf /wheels
+
+# Set working directory
+WORKDIR /app
+
+# Setup uv environment
+ENV UV_LINK_MODE=copy \
+    UV_COMPILE_BYTECODE=1 \
+    UV_PYTHON_DOWNLOADS=never \
+    PYTHONUNBUFFERED=1
+
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:0.9.11@sha256:5aa820129de0a600924f166aec9cb51613b15b68f1dcd2a02f31a500d2ede568 /uv /uvx /bin/
+
+# Copy application dependency files
+COPY pyproject.toml uv.lock README.md ./
+
+# Install dependencies (ctranslate2 already installed, uv will skip it)
+RUN --mount=type=cache,target=/root/.cache \
+    uv venv && \
+    uv sync --frozen --no-dev --no-install-project
+
+# Create non-root user
+RUN addgroup --system --gid 1001 appuser && \
+    adduser --system --uid 1001 --no-create-home --ingroup appuser appuser
+
+# Copy application code with correct ownership
+COPY --chown=appuser:appuser src/app /app/app
+
+# Set PATH to use venv
+ENV PATH="/app/.venv/bin:$PATH"
+
+# Switch to non-root user
+USER appuser
+
+# Expose the application port
+EXPOSE 8080
+
+# Start the application
+CMD ["fastapi", "run", "app/main.py", "--proxy-headers", "--host", "0.0.0.0", "--port", "8080"]
