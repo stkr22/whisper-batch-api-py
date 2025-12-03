@@ -66,29 +66,19 @@ ENV LD_LIBRARY_PATH=/usr/local/lib:${LD_LIBRARY_PATH}
 # Update library cache
 RUN ldconfig
 
-# Install ctranslate2 wheel (before uv sync to avoid conflicts)
-RUN pip3 install --no-cache-dir /wheels/*.whl && \
-    rm -rf /wheels
-
 # Set working directory
 WORKDIR /app
 
-# Setup uv environment
-ENV UV_LINK_MODE=copy \
-    UV_COMPILE_BYTECODE=1 \
-    UV_PYTHON_DOWNLOADS=never \
-    PYTHONUNBUFFERED=1
+# Install custom ctranslate2 wheel first (BEFORE other dependencies)
+RUN pip3 install --no-cache-dir /wheels/*.whl && \
+    rm -rf /wheels
 
-# Install uv
-COPY --from=ghcr.io/astral-sh/uv:0.9.11@sha256:5aa820129de0a600924f166aec9cb51613b15b68f1dcd2a02f31a500d2ede568 /uv /uvx /bin/
-
-# Copy application dependency files
-COPY pyproject.toml uv.lock README.md ./
-
-# Install dependencies (ctranslate2 already installed, uv will skip it)
-RUN --mount=type=cache,target=/root/.cache \
-    uv venv && \
-    uv sync --frozen --no-dev --no-install-project
+# Install application dependencies (fastapi, faster-whisper, etc.)
+# faster-whisper will detect ctranslate2 is already installed and skip it
+RUN pip3 install --no-cache-dir \
+    "fastapi[standard]~=0.119.1" \
+    "python-multipart~=0.0.9" \
+    "faster-whisper~=1.2.1"
 
 # Create non-root user and cache directory
 RUN addgroup --system --gid 1001 appuser && \
@@ -100,7 +90,7 @@ RUN addgroup --system --gid 1001 appuser && \
 COPY --chown=appuser:appuser src/app /app/app
 
 # Set environment variables
-ENV PATH="/app/.venv/bin:$PATH" \
+ENV PYTHONUNBUFFERED=1 \
     HF_HOME=/app/.cache/huggingface \
     TRANSFORMERS_CACHE=/app/.cache/huggingface
 
@@ -111,4 +101,4 @@ USER appuser
 EXPOSE 8080
 
 # Start the application
-CMD ["fastapi", "run", "app/main.py", "--proxy-headers", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["python3", "-m", "fastapi", "run", "app/main.py", "--proxy-headers", "--host", "0.0.0.0", "--port", "8080"]
