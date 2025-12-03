@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.5.2](https://github.com/stkr22/whisper-batch-api-py/compare/v2.5.1...v2.5.2) (2025-12-03)
+
+
+### Bug Fixes
+
+* switching back to pip to avoid issues  with ctranslate being downloaded ([4cf48af](https://github.com/stkr22/whisper-batch-api-py/commit/4cf48afc0882e2500f08f3db9b39c4dd819143a7))
+
 ## [2.5.1](https://github.com/stkr22/whisper-batch-api-py/compare/v2.5.0...v2.5.1) (2025-12-03)
 
 
