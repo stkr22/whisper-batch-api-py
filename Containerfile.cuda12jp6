@@ -19,17 +19,39 @@ RUN python3 -m pip --no-cache-dir install cmake==3.22.*
 # Clone and compile CTranslate2 with CUDA and CuDNN support
 RUN git clone https://github.com/OpenNMT/CTranslate2.git /ctranslate2 && \
     cd /ctranslate2 && \
-    git checkout 383d063 && git submodule update --init --recursive && \
-    cmake -Bbuild_folder -DWITH_MKL=OFF -DOPENMP_RUNTIME=NONE -DWITH_CUDA=ON -DWITH_CUDNN=ON && \
+    git checkout 7f23e02 && \
+    git submodule update --init --recursive
+
+WORKDIR /ctranslate2
+
+# Build and install C++ library
+RUN cmake -Bbuild_folder \
+    -DWITH_MKL=OFF \
+    -DOPENMP_RUNTIME=NONE \
+    -DWITH_CUDA=ON \
+    -DWITH_CUDNN=ON && \
     cmake --build build_folder && \
     cd build_folder && \
-    make install
+    make install && \
+    ldconfig
 
-WORKDIR /ctranslate2/python
+# Set library path for runtime
+ENV LD_LIBRARY_PATH=/usr/local/lib:${LD_LIBRARY_PATH}
 
-# Install Python requirements for CTranslate2 and build the Python wheel
-RUN pip3 install -r install_requirements.txt && \
-    python3 setup.py bdist_wheel
+# Install Python bindings
+RUN pip3 install -r ./python/install_requirements.txt && \
+    pip3 install --no-cache-dir ./python/
 
-# Install Faster Whisper
-RUN pip3 install faster-whisper torch faster-whisper dist/*.whl
+# Install Faster Whisper and dependencies
+WORKDIR /app
+RUN pip3 install --no-cache-dir \
+    faster-whisper~=1.2.1 \
+    torch==2.9.1
+
+# Cleanup
+RUN rm -rf /ctranslate2 && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
