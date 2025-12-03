@@ -7,6 +7,8 @@ on:
     paths:
       - 'Containerfile.cuda12jp6'
       - 'src/**'
+      - 'pyproject.toml'
+      - 'uv.lock'
       - '.github/workflows/container-jetson-pr.yml'
 
 jobs:
