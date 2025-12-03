@@ -90,15 +90,19 @@ RUN --mount=type=cache,target=/root/.cache \
     uv venv && \
     uv sync --frozen --no-dev --no-install-project
 
-# Create non-root user
+# Create non-root user and cache directory
 RUN addgroup --system --gid 1001 appuser && \
-    adduser --system --uid 1001 --no-create-home --ingroup appuser appuser
+    adduser --system --uid 1001 --no-create-home --ingroup appuser appuser && \
+    mkdir -p /app/.cache && \
+    chown -R appuser:appuser /app
 
 # Copy application code with correct ownership
 COPY --chown=appuser:appuser src/app /app/app
 
-# Set PATH to use venv
-ENV PATH="/app/.venv/bin:$PATH"
+# Set environment variables
+ENV PATH="/app/.venv/bin:$PATH" \
+    HF_HOME=/app/.cache/huggingface \
+    TRANSFORMERS_CACHE=/app/.cache/huggingface
 
 # Switch to non-root user
 USER appuser
