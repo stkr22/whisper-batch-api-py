@@ -38,5 +38,3 @@ jobs:
             ghcr.io/${{ github.repository }}:jetson-latest
             ghcr.io/${{ github.repository }}:jetson-${{ github.sha }}
             ghcr.io/${{ github.repository }}:jetson-${{ env.VERSION }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
