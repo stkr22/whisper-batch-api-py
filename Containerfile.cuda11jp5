@@ -1,5 +1,5 @@
 # Start with NVIDIA CUDA base image for Jetson Orin Nano
-FROM nvidia/cuda:11.4.3-cudnn8-devel-ubuntu20.04
+FROM nvidia/cuda:11.8.0-cudnn8-devel-ubuntu20.04@sha256:28cb396884380adc15a4bda23e9654610cbc4e20a3292d7e7679a717db5f90d2
 
 # Install dependencies for compiling CTranslate2 and Faster Whisper
 RUN apt-get update && \
