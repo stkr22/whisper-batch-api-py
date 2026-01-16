@@ -1,6 +1,6 @@
 # Stage 1: Builder - Build CTranslate2 from source
 # Using L4T JetPack base image for Jetson devices (ARM64)
-FROM nvcr.io/nvidia/l4t-jetpack:r36.4.0 AS builder
+FROM nvcr.io/nvidia/l4t-jetpack:r36.4.0@sha256:34ccf0f3b63c6da9eee45f2e79de9bf7fdf3beda9abfd72bbf285ae9d40bb673 AS builder
 
 # Install build dependencies
 RUN apt-get update && \
@@ -45,7 +45,7 @@ RUN pip3 install -r ./python/install_requirements.txt && \
     pip3 wheel ./python/ -w /wheels --no-deps
 
 # Stage 2: Runtime - L4T JetPack runtime image
-FROM nvcr.io/nvidia/l4t-jetpack:r36.4.0
+FROM nvcr.io/nvidia/l4t-jetpack:r36.4.0@sha256:34ccf0f3b63c6da9eee45f2e79de9bf7fdf3beda9abfd72bbf285ae9d40bb673
 
 # Install only runtime dependencies
 RUN apt-get update && \

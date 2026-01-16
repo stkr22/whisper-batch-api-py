@@ -1,5 +1,5 @@
 # Stage 1: Builder - Build CTranslate2 from source
-FROM nvidia/cuda:12.6.1-cudnn-devel-ubuntu22.04 AS builder
+FROM nvidia/cuda:12.9.1-cudnn-devel-ubuntu22.04@sha256:827e01ba745d5488e8f199bb9331ca006da97542909af4076b89754cbf5a5a55 AS builder
 
 # Install build dependencies
 RUN apt-get update && \
@@ -43,7 +43,7 @@ RUN pip3 install -r ./python/install_requirements.txt && \
     pip3 wheel ./python/ -w /wheels --no-deps
 
 # Stage 2: Runtime - Minimal image with only runtime dependencies
-FROM nvidia/cuda:12.6.1-cudnn-runtime-ubuntu22.04
+FROM nvidia/cuda:12.9.1-cudnn-runtime-ubuntu22.04@sha256:59e37ec1a44489f498791a0ab8143422eeec2fe9381c67350bca87bac8e0cefb
 
 # Install only runtime dependencies
 RUN apt-get update && \
