@@ -1,0 +1,106 @@
+# Stage 1: Builder - Build CTranslate2 from source
+# Using L4T JetPack base image for Jetson devices (ARM64)
+FROM nvcr.io/nvidia/l4t-jetpack:r36.4.0 AS builder
+
+# Install build dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        python3-dev \
+        python3-pip \
+        git \
+        wget \
+        build-essential \
+        libnuma-dev \
+        && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN python3 -m pip --no-cache-dir install cmake==3.22.*
+
+# Clone and compile CTranslate2 with CUDA and CuDNN support
+RUN git clone https://github.com/OpenNMT/CTranslate2.git /ctranslate2 && \
+    cd /ctranslate2 && \
+    git checkout 7f23e02 && \
+    git submodule update --init --recursive
+
+WORKDIR /ctranslate2
+
+# Build and install C++ library with Jetson Orin optimizations
+# CUDA_ARCH_LIST=8.7 for Jetson Orin (compute capability 8.7)
+RUN cmake -Bbuild_folder \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DWITH_MKL=OFF \
+    -DOPENMP_RUNTIME=NONE \
+    -DWITH_CUDA=ON \
+    -DWITH_CUDNN=ON \
+    -DCUDA_ARCH_LIST="8.7" \
+    -DCUDA_NVCC_FLAGS="-Xfatbin=-compress-all" && \
+    cmake --build build_folder && \
+    cd build_folder && \
+    make install && \
+    ldconfig
+
+# Build Python wheel
+RUN pip3 install -r ./python/install_requirements.txt && \
+    pip3 wheel ./python/ -w /wheels --no-deps
+
+# Stage 2: Runtime - L4T JetPack runtime image
+FROM nvcr.io/nvidia/l4t-jetpack:r36.4.0
+
+# Install only runtime dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        python3 \
+        python3-pip \
+        libnuma1 \
+        && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy compiled libraries from builder
+COPY --from=builder /usr/local/lib/libctranslate2* /usr/local/lib/
+COPY --from=builder /usr/local/include/ctranslate2 /usr/local/include/ctranslate2
+COPY --from=builder /wheels /wheels
+
+# Set library path for runtime
+ENV LD_LIBRARY_PATH=/usr/local/lib:${LD_LIBRARY_PATH}
+
+# Update library cache
+RUN ldconfig
+
+# Set working directory
+WORKDIR /app
+
+# Install custom ctranslate2 wheel first (BEFORE other dependencies)
+RUN pip3 install --no-cache-dir /wheels/*.whl && \
+    rm -rf /wheels
+
+# Install application dependencies (fastapi, faster-whisper, etc.)
+# faster-whisper will detect ctranslate2 is already installed and skip it
+RUN pip3 install --no-cache-dir \
+    "fastapi[standard]~=0.119.1" \
+    "python-multipart~=0.0.9" \
+    "faster-whisper~=1.2.1"
+
+# Create non-root user and cache directory
+RUN addgroup --system --gid 1001 appuser && \
+    adduser --system --uid 1001 --no-create-home --ingroup appuser appuser && \
+    mkdir -p /app/.cache && \
+    chown -R appuser:appuser /app
+
+# Copy application code with correct ownership
+COPY --chown=appuser:appuser src/app /app/app
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    HF_HOME=/app/.cache/huggingface \
+    TRANSFORMERS_CACHE=/app/.cache/huggingface
+
+# Switch to non-root user
+USER appuser
+
+# Expose the application port
+EXPOSE 8080
+
+# Start the application
+CMD ["python3", "-m", "fastapi", "run", "app/main.py", "--proxy-headers", "--host", "0.0.0.0", "--port", "8080"]
