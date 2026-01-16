@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'Containerfile.cuda12jp6'
+      - 'Containerfile.l4t-r36.4'
       - 'src/**'
       - 'pyproject.toml'
       - 'uv.lock'
@@ -24,7 +24,7 @@ jobs:
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6
         with:
           context: .
-          file: Containerfile.cuda12jp6
+          file: Containerfile.l4t-r36.4
           platforms: linux/arm64
           push: false
           tags: |
@@ -33,7 +33,7 @@ jobs:
       - name: Test Image
         run: |
           docker run --runtime nvidia --rm --gpus all whisper-api:jetson-pr-test \
-            python3 -c "import ctranslate2; print('CTranslate2 OK'); from faster_whisper import WhisperModel; print('faster-whisper OK')"
+            python3 -c "import ctranslate2; device_count = ctranslate2.get_cuda_device_count(); print(f'CUDA devices: {device_count}'); assert device_count > 0, 'No CUDA devices detected'; from faster_whisper import WhisperModel; print('faster-whisper OK')"
 
       - name: Cleanup
         if: always()
