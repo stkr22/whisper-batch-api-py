@@ -25,7 +25,7 @@ classifiers = [
 
 requires-python = ">=3.10,<3.12"
 dependencies = [
-    "fastapi[standard]~=0.119.1",
+    "fastapi[standard]~=0.128.0",
     "python-multipart~=0.0.9",
     "faster-whisper~=1.2.1"
 ]
@@ -40,10 +40,10 @@ Changelog = "https://github.com/stkr22/whisper-batch-api-py/blob/main/CHANGELOG.
 [dependency-groups]
 dev = [
     "ruff~=0.14.2",
-    "mypy~=1.18.0",
-    "pytest~=8.4.1",
-    "pytest-cov~=6.2.1",
-    "coverage[toml]~=7.6.0",
+    "mypy~=1.19.1",
+    "pytest~=9.0.2",
+    "pytest-cov~=7.0.0",
+    "coverage[toml]~=7.13.1",
 ]
 
 [tool.ruff]
