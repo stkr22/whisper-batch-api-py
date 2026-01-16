@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.5.2](https://github.com/stkr22/whisper-batch-api-py/compare/v2.5.1...v2.5.2) (2026-01-16)
+
+
+### Bug Fixes
+
+* :bug: switch to L4T base image for Jetson GPU support [AI] ([5469747](https://github.com/stkr22/whisper-batch-api-py/commit/5469747d81f91b260e3d64be92e662481e813701))
+* switching back to pip to avoid issues  with ctranslate being downloaded ([4cf48af](https://github.com/stkr22/whisper-batch-api-py/commit/4cf48afc0882e2500f08f3db9b39c4dd819143a7))
+* update devcontainer image to version 1.3.0 ([ab348ff](https://github.com/stkr22/whisper-batch-api-py/commit/ab348ff08cd13803f7311fd4311e4d814d5933b6))
+* update fastapi and dev dependencies to latest versions ([ed4e23c](https://github.com/stkr22/whisper-batch-api-py/commit/ed4e23c1d9261e07dbca910c6ed0d886907d4342))
+
 ## [2.5.1](https://github.com/stkr22/whisper-batch-api-py/compare/v2.5.0...v2.5.1) (2025-12-03)
 
 
