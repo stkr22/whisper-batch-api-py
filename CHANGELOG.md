@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.6.0](https://github.com/stkr22/whisper-batch-api-py/compare/v2.5.2...v2.6.0) (2026-02-01)
+
+
+### Features
+
+* update deps and linting ([1b002e8](https://github.com/stkr22/whisper-batch-api-py/commit/1b002e8c898408be4756331978cf151108a462f0))
+* update deps and linting ([09a521e](https://github.com/stkr22/whisper-batch-api-py/commit/09a521ee8abaeeddf106ef239eebaed60e6cf523))
+
+
+### Documentation
+
+* enhance documentation with detailed docstrings for main application and models ([8b3e3b1](https://github.com/stkr22/whisper-batch-api-py/commit/8b3e3b1c52cf7d0322abe3805e699b06d7fea7f0))
+
 ## [2.5.2](https://github.com/stkr22/whisper-batch-api-py/compare/v2.5.1...v2.5.2) (2026-01-16)
 
 
