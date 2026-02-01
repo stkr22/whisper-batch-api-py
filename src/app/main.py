@@ -1,3 +1,5 @@
+"""FastAPI application for batch audio transcription using Whisper models."""
+
 import logging
 import os
 import sys
@@ -23,12 +25,29 @@ ml_models: dict[str, faster_whisper.WhisperModel] = {}
 
 
 class TranscriptionResult(BaseModel):
+    """Response model for transcription results.
+
+    Attributes:
+        message: Status message about the transcription operation.
+        text: Transcribed text from the audio file.
+
+    """
+
     message: str
     text: str
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
+    """Manage application lifespan, loading and cleaning up ML models.
+
+    Args:
+        _app: FastAPI application instance (unused).
+
+    Yields:
+        None: Control returns to FastAPI after model initialization.
+
+    """
     # Load the ML model
     ml_models["transcriber_engine"] = faster_whisper.WhisperModel(
         os.getenv("WHISPER_MODEL", "distil-medium.en"),
@@ -45,6 +64,12 @@ app = FastAPI(lifespan=lifespan)
 
 @app.get("/health")
 async def health() -> dict:
+    """Health check endpoint.
+
+    Returns:
+        dict: Status dictionary indicating service health.
+
+    """
     return {"status": "healthy"}
 
 
@@ -53,6 +78,19 @@ async def transcribe(
     file: UploadFile,
     user_token: Annotated[str | None, Header()] = None,
 ) -> TranscriptionResult:
+    """Transcribe audio file to text using Whisper model.
+
+    Args:
+        file: Uploaded audio file in raw float32 format (16kHz mono).
+        user_token: Authentication token from request header.
+
+    Returns:
+        TranscriptionResult: Transcription result with message and text.
+
+    Raises:
+        HTTPException: 403 if authentication token is invalid.
+
+    """
     transcriber_engine = ml_models["transcriber_engine"]
     if user_token != os.environ["ALLOWED_USER_TOKEN"]:
         raise HTTPException(status_code=403)
