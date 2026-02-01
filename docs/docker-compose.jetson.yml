@@ -1,0 +1,27 @@
+services:
+  whisper-api:
+    image: ghcr.io/stkr22/whisper-batch-api-py:jetson-2.5.2
+    container_name: whisper-api
+    restart: unless-stopped
+    runtime: nvidia
+    ports:
+      - "8080:8080"
+    environment:
+      - WHISPER_MODEL=distil-medium.en
+      - ALLOWED_USER_TOKEN=DEBUG
+      - LOG_LEVEL=INFO
+    devices:
+      - /dev/nvhost-ctrl-gpu
+      - /dev/nvhost-gpu
+      - /dev/nvhost-as-gpu
+      - /dev/nvhost-prof-gpu
+      - /dev/nvhost-sched-gpu
+      - /dev/nvhost-ctxsw-gpu
+      - /dev/nvhost-dbg-gpu
+      - /dev/nvhost-tsg-gpu
+      - /dev/nvmap
+    volumes:
+      - whisper-cache:/root/.cache/huggingface
+
+volumes:
+  whisper-cache:

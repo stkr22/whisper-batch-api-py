@@ -25,13 +25,35 @@ docker build -f Containerfile.l4t-r36.4 -t whisper-batch-api:jetson .
 
 ### Running the Container
 
+#### Option 1: Using Docker Compose (Recommended)
+
+Create a [docker-compose.yml](docker-compose.jetson.yml) file.
+
+Start the service:
+
+```bash
+docker compose up -d
+```
+
+**Note**: Explicit device mappings are required for reliable GPU access on Jetson devices, especially after system updates.
+
+#### Option 2: Using Docker Run
+
 Start the API server:
 
 ```bash
 docker run -d \
   --name whisper-api \
   --runtime nvidia \
-  --gpus all \
+  --device /dev/nvhost-ctrl-gpu \
+  --device /dev/nvhost-gpu \
+  --device /dev/nvhost-as-gpu \
+  --device /dev/nvhost-prof-gpu \
+  --device /dev/nvhost-sched-gpu \
+  --device /dev/nvhost-ctxsw-gpu \
+  --device /dev/nvhost-dbg-gpu \
+  --device /dev/nvhost-tsg-gpu \
+  --device /dev/nvmap \
   -p 8080:8080 \
   -e ALLOWED_USER_TOKEN=your_secure_token_here \
   whisper-batch-api:jetson
@@ -42,12 +64,22 @@ docker run -d \
 Check CUDA detection:
 
 ```bash
-docker run --rm --runtime nvidia --gpus all \
+docker run --rm --runtime nvidia \
+  --device /dev/nvhost-ctrl-gpu \
+  --device /dev/nvhost-gpu \
+  --device /dev/nvhost-as-gpu \
+  --device /dev/nvmap \
   whisper-batch-api:jetson \
   python3 -c 'import ctranslate2; print("CUDA devices:", ctranslate2.get_cuda_device_count())'
 ```
 
 Expected output: `CUDA devices: 1`
+
+Or simply check the health endpoint:
+```bash
+curl http://localhost:8080/health
+# Expected: {"status":"healthy"}
+```
 
 ## API Usage
 
@@ -101,13 +133,24 @@ CTranslate2 is compiled from source with Jetson-specific optimizations:
 
 Default model: `Systran/faster-distil-whisper-medium.en`
 
-To use a different model, set the `WHISPER_MODEL` environment variable:
+To use a different model, set the `WHISPER_MODEL` environment variable in your docker-compose.yml or via docker run:
 
+**Docker Compose:**
+```yaml
+environment:
+  - WHISPER_MODEL=base.en
+  - ALLOWED_USER_TOKEN=your_token
+```
+
+**Docker Run:**
 ```bash
 docker run -d \
   --name whisper-api \
   --runtime nvidia \
-  --gpus all \
+  --device /dev/nvhost-ctrl-gpu \
+  --device /dev/nvhost-gpu \
+  --device /dev/nvhost-as-gpu \
+  --device /dev/nvmap \
   -p 8080:8080 \
   -e ALLOWED_USER_TOKEN=your_token \
   -e WHISPER_MODEL=base.en \
@@ -116,12 +159,35 @@ docker run -d \
 
 ## Troubleshooting
 
+### NvRmMemInitNvmap Permission Denied
+
+**Error:**
+```
+NvRmMemInitNvmap failed with Permission denied
+Memory Manager Not supported
+NvRmMemMgrInit failed
+RuntimeError: CUDA failed with error unknown error
+```
+
+**Cause:** Container lacks access to `/dev/nvmap` and other Jetson GPU devices.
+
+**Solution:** Use explicit device mappings (see docker-compose.yml above or docker run with `--device` flags). This issue can occur after system updates when the NVIDIA Container Toolkit configuration changes.
+
+**Quick fix:**
+```bash
+# Stop broken container
+docker stop whisper-api && docker rm whisper-api
+
+# Use docker-compose with explicit device mappings
+docker compose up -d
+```
+
 ### CUDA Devices: 0
 
 If `ctranslate2.get_cuda_device_count()` returns 0:
 
 1. Verify you're using the L4T-based Containerfile (`Containerfile.l4t-r36.4`)
-2. Ensure `--runtime nvidia --gpus all` flags are present
+2. Ensure device mappings are present (see docker-compose.yml)
 3. Check JetPack version matches base image (R36.4.x)
 
 ### Container Won't Start
@@ -135,6 +201,7 @@ Common issues:
 - Insufficient memory: Jetson Orin Nano 8GB should work, but close other applications
 - Model download failure: Check internet connectivity
 - Port already in use: Change `-p 8080:8080` to another port
+- Missing device permissions: See "NvRmMemInitNvmap Permission Denied" above
 
 ### Build Failures
 

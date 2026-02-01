@@ -1,5 +1,5 @@
 [build-system]
-requires = ["uv_build>=0.9.5,<0.10.0"]
+requires = ["uv_build>=0.9.18,<0.10.0"]
 build-backend = "uv_build"
 
 [project]
@@ -23,10 +23,10 @@ classifiers = [
     "Topic :: Home Automation",
 ]
 
-requires-python = ">=3.10,<3.12"
+requires-python = ">=3.10,<3.14"
 dependencies = [
     "fastapi[standard]~=0.128.0",
-    "python-multipart~=0.0.9",
+    "python-multipart~=0.0.22",
     "faster-whisper~=1.2.1"
 ]
 
@@ -43,64 +43,4 @@ dev = [
     "mypy~=1.19.1",
     "pytest~=9.0.2",
     "pytest-cov~=7.0.0",
-    "coverage[toml]~=7.13.1",
 ]
-
-[tool.ruff]
-line-length = 120
-indent-width = 4
-
-[tool.ruff.lint]
-select = [
-    "E",   # pycodestyle errors
-    "F",   # pyflakes
-    "I",   # isort
-    "UP",  # pyupgrade
-    "N",   # pep8-naming
-    "B",   # flake8-bugbear
-    "C4",  # flake8-comprehensions
-    "RET", # flake8-return
-    "SIM", # flake8-simplify
-    "ARG", # flake8-unused-arguments
-    "PTH", # flake8-use-pathlib
-    "ERA", # eradicate
-    "PL",  # pylint
-    "RUF", # ruff-specific rules
-    "TCH", # flake8-type-checking
-]
-ignore = ["E203"]
-
-[tool.ruff.format]
-quote-style = "double"
-indent-style = "space"
-
-[tool.mypy]
-warn_return_any = true
-warn_unused_configs = true
-
-[[tool.mypy.overrides]]
-module = "faster_whisper"
-ignore_missing_imports = true
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-python_files = ["test_*.py"]
-addopts = "-ra -q"
-
-[tool.coverage.run]
-source = ["app"]
-branch = true
-
-[tool.coverage.report]
-exclude_lines = [
-    "pragma: no cover",
-    "def __repr__",
-    "if __name__ == .__main__.:",
-]
-
-[tool.commitizen]
-name = "cz_conventional_commits"
-tag_format = "v$version"
-version_scheme = "pep440"
-version_provider = "scm"
-update_changelog_on_bump = true
