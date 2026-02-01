@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.6.1](https://github.com/stkr22/whisper-batch-api-py/compare/v2.6.0...v2.6.1) (2026-02-01)
+
+
+### Documentation
+
+* updating compose version ([60e8250](https://github.com/stkr22/whisper-batch-api-py/commit/60e82501ab8bd35990eece0ff0e45c91d8bc4fca))
+
 ## [2.6.0](https://github.com/stkr22/whisper-batch-api-py/compare/v2.5.2...v2.6.0) (2026-02-01)
 
 
