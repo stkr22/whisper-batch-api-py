@@ -1,6 +1,6 @@
 services:
   whisper-api:
-    image: ghcr.io/stkr22/whisper-batch-api-py:jetson-2.5.2
+    image: ghcr.io/stkr22/whisper-batch-api-py:jetson-2.6.0
     container_name: whisper-api
     restart: unless-stopped
     runtime: nvidia
