@@ -32,7 +32,17 @@ jobs:
 
       - name: Test Image
         run: |
-          docker run --runtime nvidia --rm --gpus all whisper-api:jetson-pr-test \
+          docker run --runtime nvidia --rm \
+            --device /dev/nvhost-ctrl-gpu \
+            --device /dev/nvhost-gpu \
+            --device /dev/nvhost-as-gpu \
+            --device /dev/nvhost-prof-gpu \
+            --device /dev/nvhost-sched-gpu \
+            --device /dev/nvhost-ctxsw-gpu \
+            --device /dev/nvhost-dbg-gpu \
+            --device /dev/nvhost-tsg-gpu \
+            --device /dev/nvmap \
+            whisper-api:jetson-pr-test \
             python3 -c "import ctranslate2; device_count = ctranslate2.get_cuda_device_count(); print(f'CUDA devices: {device_count}'); assert device_count > 0, 'No CUDA devices detected'; from faster_whisper import WhisperModel; print('faster-whisper OK')"
 
       - name: Cleanup
